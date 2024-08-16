@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: messagingSystem
+  data:
+    mongodb:
+      host: 10.1.22.176
+      port: 27017
+      database: messagingApp
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+file:
+  storage-path: C:\Users\abenezert\Desktop\Files for test
+
+
+
