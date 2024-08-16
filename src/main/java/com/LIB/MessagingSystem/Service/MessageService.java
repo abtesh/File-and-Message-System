@@ -56,13 +56,38 @@ public class MessageService {
         Message message = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        if(!message.isDraft()){
+        if (!message.isDraft()) {
             throw new RuntimeException("Message is Already Sent and cannot be sent again");
         }
-        message.setDraft(false);  // Mark the message as sent
+
+        // Mark the message as sent
+        message.setDraft(false);
         message.setDate(new Date());
-       return messageRepository.save(message);
+
+        // Save file privileges
+        saveFilePrivilegesForMessage(message);
+
+        return messageRepository.save(message);
     }
+
+    private void saveFilePrivilegesForMessage(Message message) {
+        List<FilePrivilege> filePrivileges = new ArrayList<>();
+        String messageId = message.getId();
+
+        for (String attachment : message.getAttachments()) {
+            FilePrivilege privilege = new FilePrivilege();
+            privilege.setMessageId(messageId);
+            privilege.setAttachmentId(attachment); // Assuming attachment is the file name
+            privilege.setUserId(message.getReceiverId());// Assign the receiver as a user with privileges
+            privilege.setCanView(true);
+            privilege.setCanDownload(true); // Default to not allowing download
+            filePrivileges.add(privilege);
+        }
+
+        // Save all privileges to the repository
+        filePrivilegeRepository.saveAll(filePrivileges);
+    }
+
     public Message getMessage(String id) {
         return messageRepository.findById(id).orElseThrow(() -> new RuntimeException("Message not found"));
     }

@@ -19,5 +19,7 @@ public class FilePrivilege {
     private String messageId;
     private String attachmentId;
     private String userId;
+    private boolean canView;
+    private boolean canDownload;
     private AccessLevel accessLevel;
 }

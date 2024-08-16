@@ -19,6 +19,7 @@ public class MessageController {
     private final MessageService messageService;
     private final UserRepository userRepository;
 
+
     @PostMapping("/createUser")
     public String createUser(@RequestBody User user) {
         userRepository.save(user);
