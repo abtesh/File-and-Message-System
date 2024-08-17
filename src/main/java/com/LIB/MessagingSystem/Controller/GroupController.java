@@ -3,7 +3,7 @@ package com.LIB.MessagingSystem.Controller;
 import com.LIB.MessagingSystem.Dto.GroupMessageDto;
 import com.LIB.MessagingSystem.Model.Group;
 import com.LIB.MessagingSystem.Model.Message;
-import com.LIB.MessagingSystem.Service.GroupService;
+import com.LIB.MessagingSystem.Service.Impl.GroupServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +15,12 @@ import java.util.List;
 @RequestMapping("/groups")
 @RequiredArgsConstructor
 public class GroupController {
-    private final GroupService groupService;
+    private final GroupServiceImpl groupServiceImpl;
 
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(@RequestBody Group group) {
         try {
-            Group createdGroup = groupService.createGroup(group);
+            Group createdGroup = groupServiceImpl.createGroup(group);
             return ResponseEntity.ok(createdGroup);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -29,11 +29,11 @@ public class GroupController {
 
     @PutMapping("/{groupId}/addMembers")
     public Group addMembers(@PathVariable String groupId, @RequestBody List<String> memberIds) {
-        return groupService.addMembers(groupId, memberIds);
+        return groupServiceImpl.addMembers(groupId, memberIds);
     }
     @PostMapping("/createMessage")
     public Message createGroupMessage(@ModelAttribute GroupMessageDto message) {
-       return groupService.createGroupMessage(message.getSenderUsername(),
+       return groupServiceImpl.createGroupMessage(message.getSenderUsername(),
                 message.getGroupId(),
                 message.getContent(),
                 message.getAttachments());
@@ -42,7 +42,7 @@ public class GroupController {
     @PutMapping("/send/{groupId}")
     public ResponseEntity<?> sendMessage(@PathVariable("groupId") String groupId) {
         try {
-            Message sentMessage = groupService.sendMessage(groupId);
+            Message sentMessage = groupServiceImpl.sendMessage(groupId);
             return ResponseEntity.ok(sentMessage);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -50,7 +50,7 @@ public class GroupController {
     }
     @GetMapping("/search/{groupId}")
     public ResponseEntity<Group> getGroupById(@PathVariable String groupId) {
-        Group group = groupService.findGroupById(groupId);
+        Group group = groupServiceImpl.findGroupById(groupId);
         return ResponseEntity.ok(group);
     }
 //    @DeleteMapping

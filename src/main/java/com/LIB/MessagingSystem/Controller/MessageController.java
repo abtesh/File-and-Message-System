@@ -5,7 +5,7 @@ import com.LIB.MessagingSystem.Dto.MessageSearchRequestDto;
 import com.LIB.MessagingSystem.Model.Message;
 import com.LIB.MessagingSystem.Model.User;
 import com.LIB.MessagingSystem.Repository.UserRepository;
-import com.LIB.MessagingSystem.Service.MessageService;
+import com.LIB.MessagingSystem.Service.Impl.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/messenger")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
+    private final MessageServiceImpl messageServiceImpl;
     private final UserRepository userRepository;
 
 
@@ -28,17 +28,17 @@ public class MessageController {
 
     @PostMapping("/create")
     public Message createMessage(@ModelAttribute MessageRequest message) {
-       return messageService.createMessage(message.getSenderUsername(),
+        System.out.println("Received message request: " + message);
+        return messageServiceImpl.createMessage(message.getSenderUsername(),
                 message.getReceiverUsername(),
                 message.getContent(),
                 message.getAttachments());
-        //return "Message created";
     }
 
     @PostMapping("/send/{objectId}")
     public ResponseEntity<?> sendMessage(@PathVariable("objectId") String objectId) {
         try {
-            Message sentMessage = messageService.sendMessage(objectId);
+            Message sentMessage = messageServiceImpl.sendMessage(objectId);
             return ResponseEntity.ok(sentMessage);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -48,23 +48,23 @@ public class MessageController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Message> getMessage(@PathVariable("id") String id) {
-        Message message = messageService.getMessage(id);
+        Message message = messageServiceImpl.getMessage(id);
         return ResponseEntity.ok(message);
     }
 
     @GetMapping("/{senderId}/{receiverId}")
     public List<Message> getMessageBetweenUsers(@PathVariable("senderId") String senderId, @PathVariable("receiverId") String receiverId) {
-        return messageService.getMessagesBetweenUsers(senderId, receiverId);
+        return messageServiceImpl.getMessagesBetweenUsers(senderId, receiverId);
     }
 
     @GetMapping("/inbox/{receiverId}")
     public List<Message> getInboxMessages(@PathVariable("receiverId") String receiverId) {
-        return messageService.getMessagesForUser(receiverId);
+        return messageServiceImpl.getMessagesForUser(receiverId);
     }
 
     @PostMapping("/search")
     public ResponseEntity<Message> getMessageById(@RequestBody MessageSearchRequestDto searchRequest) {
-        Message message = messageService.findMessageByIdForUser(
+        Message message = messageServiceImpl.findMessageByIdForUser(
                 searchRequest.getMessageId(),
                 searchRequest.getUsername()
         );
@@ -74,12 +74,12 @@ public class MessageController {
     public Message getMessageWithAttachmentCheck(@PathVariable String messageId,
                                                  @PathVariable String attachmentId,
                                                  @RequestParam String userId) {
-        return messageService.getMessageWithAttachmentCheck(messageId, attachmentId, userId);
+        return messageServiceImpl.getMessageWithAttachmentCheck(messageId, attachmentId, userId);
 
     }
     @DeleteMapping("/delete/{messageId}")
     public String deleteMessage(@PathVariable("messageId") String messageId) {
-        messageService.deleteMessageById(messageId);
+        messageServiceImpl.deleteMessageById(messageId);
         return "Message deleted";
     }
 }

@@ -5,7 +5,7 @@ import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Message;
 import com.LIB.MessagingSystem.Repository.FilePrivilegeRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
-import com.LIB.MessagingSystem.Service.MessageService;
+import com.LIB.MessagingSystem.Service.Impl.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -27,7 +27,7 @@ import java.util.Optional;
 public class FileController {
     @Value("${file.storage-path}")
     private String storagePath;
-    private final MessageService messageService;
+    private final MessageServiceImpl messageServiceImpl;
     private final MessageRepository messageRepository;
     private final FilePrivilegeRepository filePrivilegeRepository;
 
