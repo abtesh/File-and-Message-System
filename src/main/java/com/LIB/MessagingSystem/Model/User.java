@@ -8,6 +8,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.UUID;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ */
+
+
 @Document(collection = "user")
 @Data
 @AllArgsConstructor

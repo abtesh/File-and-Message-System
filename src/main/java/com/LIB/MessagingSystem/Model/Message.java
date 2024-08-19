@@ -4,12 +4,16 @@ import com.LIB.MessagingSystem.Model.Enums.RecipientTypes;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ */
+
 
 @Document(collection = "messages")
 @AllArgsConstructor

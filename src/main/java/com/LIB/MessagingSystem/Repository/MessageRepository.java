@@ -4,6 +4,11 @@ import com.LIB.MessagingSystem.Model.Message;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ */
+
 import java.util.List;
 @Repository
 public interface MessageRepository extends MongoRepository<Message, String> {

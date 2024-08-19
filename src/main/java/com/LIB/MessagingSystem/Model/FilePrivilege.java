@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ */
+
 
 @Document(collection = "file_privileges")
 @Data

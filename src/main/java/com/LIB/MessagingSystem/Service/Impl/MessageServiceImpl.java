@@ -7,6 +7,7 @@ import com.LIB.MessagingSystem.Model.User;
 import com.LIB.MessagingSystem.Repository.FilePrivilegeRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
 import com.LIB.MessagingSystem.Repository.UserRepository;
+import com.LIB.MessagingSystem.Service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +22,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ *  This service Implementation class creates messages for Individuals, sends messages,
+ *  Creates and Updates privilages for users and deletes messages
+ */
+
+
+
 @Service
 @RequiredArgsConstructor
-public class MessageServiceImpl {
+public class MessageServiceImpl implements MessageService {
     private static final Logger logger = LoggerFactory.getLogger(MessageServiceImpl.class);
 
     private final MessageRepository messageRepository;

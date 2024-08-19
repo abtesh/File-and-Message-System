@@ -20,6 +20,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ *  This service implementation class creates new groups, add members to the groups,
+ *  create messages to groups and send messages
+ */
+
+
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {

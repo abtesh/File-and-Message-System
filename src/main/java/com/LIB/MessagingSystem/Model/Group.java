@@ -9,6 +9,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ *
+ *  @author Abenezer Teshome  - Date 17/aug/2024
+ */
+
+
+
 @Document(collection = "groups")
 @Data
 @AllArgsConstructor
