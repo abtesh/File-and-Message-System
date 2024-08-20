@@ -33,12 +33,11 @@ import java.util.Optional;
 public class FileController {
     @Value("${file.storage-path}")
     private String storagePath;
-    private final MessageServiceImpl messageServiceImpl;
     private final MessageRepository messageRepository;
     private final FilePrivilegeRepository filePrivilegeRepository;
 
     @GetMapping("/viewAttachment")
-    public ResponseEntity<Resource> viewAttachment(@RequestParam String fileName, @RequestParam String username) throws IOException {
+    public ResponseEntity<Resource> viewAttachment(@RequestParam String fileName, @RequestParam String userId) throws IOException {
         // Retrieve the message by the attachment file name
         Message message = messageRepository.findByAttachmentsContaining(fileName);
         if (message == null) {
@@ -46,7 +45,7 @@ public class FileController {
         }
 
         // Validate user's access to the file
-        FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndUserId(fileName, username)
+        FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndUserId(fileName, userId)
                 .orElseThrow(() -> new RuntimeException("Access Denied"));
 
         if (!privilege.isCanView() && !privilege.isCanDownload()) {
@@ -111,7 +110,61 @@ public class FileController {
 
         return ResponseEntity.ok("Privileges updated successfully");
     }
+    @PostMapping("/group/setFilePrivilege")
+    public ResponseEntity<?> setGroupFilePrivilege(@RequestParam String groupId,
+                                                   @RequestParam String attachmentId,
+                                                   @RequestParam String userId,
+                                                   @RequestParam boolean canView,
+                                                   @RequestParam boolean canDownload) {
+        Optional<FilePrivilege> optionalPrivilege = filePrivilegeRepository.findByGroupIdAndAttachmentIdAndUserId(groupId, attachmentId, userId);
 
+        FilePrivilege privilege;
+        if (optionalPrivilege.isPresent()) {
+            privilege = optionalPrivilege.get();
+        } else {
+            privilege = new FilePrivilege();
+            privilege.setGroupId(groupId);
+            privilege.setAttachmentId(attachmentId);
+            privilege.setUserId(userId);
+        }
+        privilege.setCanView(canView);
+        privilege.setCanDownload(canDownload);
 
+        filePrivilegeRepository.save(privilege);
+        return ResponseEntity.ok("Group file privileges updated successfully");
+    }
+    @GetMapping("/group/viewAttachment")
+    public ResponseEntity<Resource> viewGroupAttachment(@RequestParam String fileName, @RequestParam String userId, @RequestParam String groupId) throws IOException {
+        Message message = messageRepository.findByGroupIdAndAttachmentsContaining(groupId, fileName);
+        if (message == null) {
+            throw new RuntimeException("Message not found for the given attachment");
+        }
+        FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndUserIdAndGroupId(fileName, userId, groupId)
+                .orElseThrow(() -> new RuntimeException("Access Denied"));
 
+        if (!privilege.isCanView() && !privilege.isCanDownload()) {
+            throw new RuntimeException("You don't have permission to view or download this file");
+        }
+
+        Path path = Paths.get(storagePath).resolve(fileName);
+        Resource resource = new UrlResource(path.toUri());
+
+        if (resource.exists() || resource.isReadable()) {
+            String contentType = Files.probeContentType(path);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            String contentDisposition = privilege.isCanDownload()
+                    ? "attachment; filename=\"" + path.getFileName().toString() + "\""
+                    : "inline; filename=\"" + path.getFileName().toString() + "\"";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .body(resource);
+        } else {
+            throw new RuntimeException("File not found or not readable");
+        }
+    }
 }

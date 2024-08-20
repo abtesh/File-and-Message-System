@@ -3,6 +3,7 @@ package com.LIB.MessagingSystem.Controller;
 import com.LIB.MessagingSystem.Dto.GroupMessageDto;
 import com.LIB.MessagingSystem.Model.Group;
 import com.LIB.MessagingSystem.Model.Message;
+import com.LIB.MessagingSystem.Service.GroupService;
 import com.LIB.MessagingSystem.Service.Impl.GroupServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ import java.util.List;
 @RequestMapping("/groups")
 @RequiredArgsConstructor
 public class GroupController {
-    private final GroupServiceImpl groupServiceImpl;
+    private final GroupService groupServiceImpl;
 
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(@RequestBody Group group) {

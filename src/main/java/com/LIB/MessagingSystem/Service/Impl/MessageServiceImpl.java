@@ -3,7 +3,7 @@ package com.LIB.MessagingSystem.Service.Impl;
 import com.LIB.MessagingSystem.Model.Enums.RecipientTypes;
 import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Message;
-import com.LIB.MessagingSystem.Model.User;
+import com.LIB.MessagingSystem.Model.Users;
 import com.LIB.MessagingSystem.Repository.FilePrivilegeRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
 import com.LIB.MessagingSystem.Repository.UserRepository;
@@ -11,16 +11,12 @@ import com.LIB.MessagingSystem.Service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  *
@@ -39,13 +35,15 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final FilePrivilegeRepository filePrivilegeRepository;
+    @Value("${file.storage-path}")
+    private String storagePath;
 
-    public Message createMessage(String senderUsername, String receiverUsername, String content, List<MultipartFile> attachments) {
+    public Message createMessage(String senderEmail, String receiverEmail, String content, List<MultipartFile> attachments) {
         // Find sender and receiver
-        User sender = userRepository.findByUsername(senderUsername);
-        User receiver = userRepository.findByUsername(receiverUsername);
+        Optional<Users> sender = userRepository.findByEmail(senderEmail);
+        Optional<Users> receiver = userRepository.findByEmail(receiverEmail);
 
-        if (sender == null || receiver == null) {
+        if (sender.isEmpty() || receiver.isEmpty()) {
             throw new RuntimeException("Sender or receiver not found");
         }
 
@@ -59,8 +57,8 @@ public class MessageServiceImpl implements MessageService {
         }
         // Create message
         Message message = new Message();
-        message.setSenderId(sender.getId());
-        message.setReceiverId(receiver.getId());
+        message.setSenderId(sender.get().getId());
+        message.setReceiverId(receiver.get().getId());
         message.setContent(content);
         message.setDraft(true);
         message.setRecipientType(RecipientTypes.INDIVIDUAL);
@@ -75,7 +73,6 @@ public class MessageServiceImpl implements MessageService {
     public Message sendMessage(String id) {
         Message message = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
-
         if (!message.isDraft()) {
             throw new RuntimeException("Message is Already Sent and cannot be sent again");
         }
@@ -115,7 +112,7 @@ public class MessageServiceImpl implements MessageService {
         return messageRepository.findByReceiverId(receiverId);
     }
     public Message findMessageByIdForUser(String messageId, String username) {
-        User user = userRepository.findByUsername(username);
+        Users user = userRepository.findByUsername(username);
 
         return messageRepository.findById(messageId)
                 .filter(message -> message.getSenderId().equals(user.getId()) ||
@@ -123,24 +120,30 @@ public class MessageServiceImpl implements MessageService {
                 .orElseThrow(() -> new RuntimeException("Message not found or access denied"));
     }
     public String saveAttachment(MultipartFile file) {
-        String uploadDir = "C:\\Users\\abenezert\\Desktop\\Files for test";// Specify the correct path here
-        String fileName = file.getOriginalFilename();
-        Path filePath = Paths.get(uploadDir, fileName);
+        String uploadDir = storagePath;  // Specify the correct path here
         File directory = new File(uploadDir);
+        // Check if the directory exists, if not, create it
         if (!directory.exists()) {
             directory.mkdirs();  // Create the directory and any missing parent directories
-            logger.info("Directory created: {}", directory.getAbsolutePath());
+            logger.info("Directory created: " + directory.getAbsolutePath());
         }
+
         try {
-            // Save the file to the specified directory
-            File dest = new File(directory, file.getOriginalFilename());
+            // Generate a unique file name by concatenating a UUID with the original file name
+            String originalFilename = file.getOriginalFilename();
+            String uniqueFileName = UUID.randomUUID() + "_" + originalFilename;
+
+            // Save the file to the specified directory with the unique name
+            File dest = new File(directory, uniqueFileName);
             file.transferTo(dest);
-            logger.info("File saved at: {}", dest.getAbsolutePath());
+            logger.info("File saved at: " + dest.getAbsolutePath());
+
+            return uniqueFileName;  // Return the unique file name
+
         } catch (IOException e) {
             logger.error("Failed to save file", e);
             throw new RuntimeException("Failed to save file", e);
         }
-        return fileName;
     }
     public Message getMessageWithAttachmentCheck(String messageId, String attachmentId, String userId) {
         Optional<FilePrivilege> privilege = filePrivilegeRepository.findByMessageIdAndAttachmentIdAndUserId(messageId, attachmentId, userId);
@@ -166,7 +169,7 @@ public class MessageServiceImpl implements MessageService {
         logger.info("Sender ID: {}, Receiver ID: {}", message.getSenderId(), message.getReceiverId());
 
         // Fetch user details based on username
-        User user = userRepository.findByUsername(username); // Adjust this method according to your User repository
+        Users user = userRepository.findByUsername(username); // Adjust this method according to your User repository
         if (user == null) {
             logger.warn("User not found: {}", username);
             return false;

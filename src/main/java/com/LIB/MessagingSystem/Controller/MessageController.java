@@ -3,9 +3,9 @@ package com.LIB.MessagingSystem.Controller;
 import com.LIB.MessagingSystem.Dto.MessageRequest;
 import com.LIB.MessagingSystem.Dto.MessageSearchRequestDto;
 import com.LIB.MessagingSystem.Model.Message;
-import com.LIB.MessagingSystem.Model.User;
+import com.LIB.MessagingSystem.Model.Users;
 import com.LIB.MessagingSystem.Repository.UserRepository;
-import com.LIB.MessagingSystem.Service.Impl.MessageServiceImpl;
+import com.LIB.MessagingSystem.Service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +22,12 @@ import java.util.List;
 @RequestMapping("/messenger")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageServiceImpl messageServiceImpl;
+    private final MessageService messageServiceImpl;
     private final UserRepository userRepository;
 
 
     @PostMapping("/createUser")
-    public String createUser(@RequestBody User user) {
+    public String createUser(@RequestBody Users user) {
         userRepository.save(user);
         return "User created";
     }
@@ -35,8 +35,8 @@ public class MessageController {
     @PostMapping("/create")
     public Message createMessage(@ModelAttribute MessageRequest message) {
         System.out.println("Received message request: " + message);
-        return messageServiceImpl.createMessage(message.getSenderUsername(),
-                message.getReceiverUsername(),
+        return messageServiceImpl.createMessage(message.getSenderEmail(),
+                message.getReceiverEmail(),
                 message.getContent(),
                 message.getAttachments());
     }

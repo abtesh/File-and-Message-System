@@ -12,6 +12,18 @@ spring:
       max-request-size: 10MB
 file:
   storage-path: C:\Users\abenezert\Desktop\Files for test
+application:
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 2419200000 # 7 day
+
+
+ldap:
+  username: CN=digildap,OU=ITS Users,OU=IT,DC=LIB5,DC=COM
+  password: D!g!ld4p
+  url: ldap://10.1.10.1:389
+  search-base: OU=LIB Users & Computers,DC=LIB5,DC=COM
 
 
 

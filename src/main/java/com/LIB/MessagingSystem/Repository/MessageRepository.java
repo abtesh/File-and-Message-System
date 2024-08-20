@@ -19,4 +19,5 @@ public interface MessageRepository extends MongoRepository<Message, String> {
     //Optional<Message> findBydocumentId(String documentId);
     Message deleteMessageById(String id);
     Message findByAttachmentsContaining(String fileName);
+    Message findByGroupIdAndAttachmentsContaining(String groupId, String fileName);
 }

@@ -1,9 +1,11 @@
 package com.LIB.MessagingSystem.Service.Impl;
 
 import com.LIB.MessagingSystem.Model.Enums.RecipientTypes;
+import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Group;
 import com.LIB.MessagingSystem.Model.Message;
-import com.LIB.MessagingSystem.Model.User;
+import com.LIB.MessagingSystem.Model.Users;
+import com.LIB.MessagingSystem.Repository.FilePrivilegeRepository;
 import com.LIB.MessagingSystem.Repository.GroupRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
 import com.LIB.MessagingSystem.Repository.UserRepository;
@@ -11,14 +13,13 @@ import com.LIB.MessagingSystem.Service.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -36,10 +37,19 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
+    private final FilePrivilegeRepository filePrivilegeRepository;
+    @Value("${file.storage-path}")
+    private String storagePath;
 
 
     public Group createGroup(Group group) {
-       return groupRepository.save(group);
+        // Ensure all members exist in the system
+        for (String memberId : group.getMembers()) {
+            if (!userRepository.existsById(memberId)) {
+                throw new RuntimeException("User with ID: " + memberId + " does not exist in the system");
+            }
+        }
+        return groupRepository.save(group);
     }
 
     public Group addMembers(String groupId, List<String> memberIds) {
@@ -68,19 +78,27 @@ public class GroupServiceImpl implements GroupService {
     }
 
 
-    public Message createGroupMessage(String senderUsername, String groupId, String content, List<MultipartFile> attachments) {
-        User sender = userRepository.findByUsername(senderUsername);
-       Group group = groupRepository.findByName(groupId);
-
+    public Message createGroupMessage(String senderEmail, String groupId, String content, List<MultipartFile> attachments) {
+        // Find sender by email
+        Optional<Users> sender = userRepository.findByEmail(senderEmail);
+        // Find group by ID
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        if(sender.isEmpty()){
+            throw new RuntimeException("Sender Email not found");
+        }
+        // Handle attachments
         List<String> attachmentPaths = new ArrayList<>();
-        if (attachments != null) {
+        if (attachments != null && !attachments.isEmpty()) {
             for (MultipartFile attachment : attachments) {
                 String filePath = saveAttachment(attachment);
                 attachmentPaths.add(filePath);
             }
         }
+
+        // Create message
         Message message = new Message();
-        message.setSenderId(sender.getId());
+        message.setSenderId(sender.get().getId());
         message.setGroupId(groupId);
         message.setContent(content);
         message.setDraft(true);
@@ -88,10 +106,26 @@ public class GroupServiceImpl implements GroupService {
         message.setAttachments(attachmentPaths);
         message.setDate(new Date());
 
-       return messageRepository.save(message);
+        // Save message and return
+        return messageRepository.save(message);
     }
+    public Message sendMessage(String id) {
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+        if (!message.isDraft()) {
+            throw new RuntimeException("Message is Already Sent and cannot be sent again");
+        }
+        // Mark the message as sent
+        message.setDraft(false);
+        message.setDate(new Date());
+
+        // Save file privileges
+        saveFilePrivilegesForGroupMessage(message);
+        return messageRepository.save(message);
+    }
+
     public String saveAttachment(MultipartFile file) {
-        String uploadDir = "C:\\Users\\abenezert\\Desktop\\Files for test";  // Specify the correct path here
+        String uploadDir = storagePath;  // Specify the correct path here
         File directory = new File(uploadDir);
 
         // Check if the directory exists, if not, create it
@@ -101,26 +135,40 @@ public class GroupServiceImpl implements GroupService {
         }
 
         try {
-            // Save the file to the specified directory
-            File dest = new File(directory, file.getOriginalFilename());
+            // Generate a unique file name by concatenating a UUID with the original file name
+            String originalFilename = file.getOriginalFilename();
+            String uniqueFileName = UUID.randomUUID() + "_" + originalFilename;
+
+            // Save the file to the specified directory with the unique name
+            File dest = new File(directory, uniqueFileName);
             file.transferTo(dest);
             logger.info("File saved at: " + dest.getAbsolutePath());
+
+            return uniqueFileName;  // Return the unique file name
+
         } catch (IOException e) {
             logger.error("Failed to save file", e);
             throw new RuntimeException("Failed to save file", e);
         }
-        return file.getOriginalFilename();
     }
-    public Message sendMessage(String id) {
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
-        if(!message.isDraft()){
-            throw new RuntimeException("Message is Already sent and can't be sent Again");
+    private void saveFilePrivilegesForGroupMessage(Message message) {
+        List<FilePrivilege> filePrivileges = new ArrayList<>();
+        String messageId = message.getId();
+
+        for (String attachment : message.getAttachments()) {
+            FilePrivilege privilege = new FilePrivilege();
+            privilege.setMessageId(messageId);
+            privilege.setAttachmentId(attachment); // Assuming attachment is the file name
+            privilege.setUserId(message.getGroupId());// Assign the receiver as a user with privileges
+            privilege.setCanView(true);
+            privilege.setCanDownload(false); // Default to not allowing download
+            filePrivileges.add(privilege);
         }
-        message.setDraft(false);  // Mark the message as sent
-        message.setDate(new Date());
-       return messageRepository.save(message);
+
+        // Save all privileges to the repository
+        filePrivilegeRepository.saveAll(filePrivileges);
     }
+
     public Group findGroupById(String groupId) {
         return groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found with id: " + groupId));

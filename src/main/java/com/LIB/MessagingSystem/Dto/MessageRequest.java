@@ -17,8 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageRequest {
-    private String senderUsername;
-    private String receiverUsername;
+    private String senderEmail;
+    private String receiverEmail;
     private String content;
     private List<MultipartFile> attachments;
 }

@@ -1,8 +1,11 @@
 package com.LIB.MessagingSystem.Repository;
 
-import com.LIB.MessagingSystem.Model.User;
+import com.LIB.MessagingSystem.Model.Users;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 /**
  *
@@ -10,9 +13,13 @@ import org.springframework.stereotype.Repository;
  */
 
 @Repository
-public interface UserRepository extends MongoRepository<User, String> {
+public interface UserRepository extends MongoRepository<Users, String> {
 //    public User getUserByEmail(String email);
 //    public User getUserByUsername(String username);
    // public void saveUser(User user);
-    User findByUsername(String username);
+    Users findByUsername(String username);
+    @Query("{ 'email': ?0, 'isActive': ?1 }")
+    Optional<Users> findByEmailAndIsActive(String username, boolean active);
+
+    Optional<Users> findByEmail(String username);
 }
