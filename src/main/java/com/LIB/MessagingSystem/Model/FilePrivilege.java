@@ -27,5 +27,4 @@ public class FilePrivilege {
     private String groupId;
     private boolean canView;
     private boolean canDownload;
-    private AccessLevel accessLevel;
 }

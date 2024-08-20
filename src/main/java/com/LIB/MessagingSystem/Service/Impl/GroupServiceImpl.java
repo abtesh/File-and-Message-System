@@ -1,5 +1,6 @@
 package com.LIB.MessagingSystem.Service.Impl;
 
+import com.LIB.MessagingSystem.Dto.SecurityDtos.LdapUserDTO;
 import com.LIB.MessagingSystem.Model.Enums.RecipientTypes;
 import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Group;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,6 +47,10 @@ public class GroupServiceImpl implements GroupService {
     public Group createGroup(Group group) {
         // Ensure all members exist in the system
         for (String memberId : group.getMembers()) {
+            LdapUserDTO user = (LdapUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+           String sender = user.getUid();
+            group.setMakerId(sender);
+            group.setCreationDate(new Date());
             if (!userRepository.existsById(memberId)) {
                 throw new RuntimeException("User with ID: " + memberId + " does not exist in the system");
             }
@@ -80,7 +86,8 @@ public class GroupServiceImpl implements GroupService {
 
     public Message createGroupMessage(String senderEmail, String groupId, String content, List<MultipartFile> attachments) {
         // Find sender by email
-        Optional<Users> sender = userRepository.findByEmail(senderEmail);
+        LdapUserDTO user = (LdapUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<Users> sender = userRepository.findByEmail(user.getEmail());
         // Find group by ID
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
@@ -159,7 +166,8 @@ public class GroupServiceImpl implements GroupService {
             FilePrivilege privilege = new FilePrivilege();
             privilege.setMessageId(messageId);
             privilege.setAttachmentId(attachment); // Assuming attachment is the file name
-            privilege.setUserId(message.getGroupId());// Assign the receiver as a user with privileges
+            //privilege.setUserId(message.getGroupId());// Assign the receiver as a user with privileges
+            privilege.setGroupId(message.getGroupId());
             privilege.setCanView(true);
             privilege.setCanDownload(false); // Default to not allowing download
             filePrivileges.add(privilege);

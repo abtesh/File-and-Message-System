@@ -40,7 +40,7 @@ public class GroupController {
     }
     @PostMapping("/createMessage")
     public Message createGroupMessage(@ModelAttribute GroupMessageDto message) {
-       return groupServiceImpl.createGroupMessage(message.getSenderUsername(),
+       return groupServiceImpl.createGroupMessage(message.getSenderEmail(),
                 message.getGroupId(),
                 message.getContent(),
                 message.getAttachments());

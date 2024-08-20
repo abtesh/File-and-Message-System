@@ -25,7 +25,7 @@ public class Group {
     private String id;
     private String name;
     private String makerId;
-    private String checkerId;
+    //private String checkerId;
     private String description;
     private String title;
     private Date creationDate;

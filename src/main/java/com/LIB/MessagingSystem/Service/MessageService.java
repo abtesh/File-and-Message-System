@@ -12,7 +12,7 @@ import java.util.List;
 
 
 public interface MessageService {
-    Message createMessage(String senderUsername, String receiverUsername, String content, List<MultipartFile> attachments);
+    Message createMessage( String receiverUsername, String content, List<MultipartFile> attachments);
     Message sendMessage(String id);
     Message getMessage(String id);
     List<Message> getMessagesBetweenUsers(String senderId, String receiverId);

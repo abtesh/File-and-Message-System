@@ -35,7 +35,7 @@ public class MessageController {
     @PostMapping("/create")
     public Message createMessage(@ModelAttribute MessageRequest message) {
         System.out.println("Received message request: " + message);
-        return messageServiceImpl.createMessage(message.getSenderEmail(),
+        return messageServiceImpl.createMessage(
                 message.getReceiverEmail(),
                 message.getContent(),
                 message.getAttachments());

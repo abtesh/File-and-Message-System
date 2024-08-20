@@ -1,5 +1,6 @@
 package com.LIB.MessagingSystem.Service.Impl;
 
+import com.LIB.MessagingSystem.Dto.SecurityDtos.LdapUserDTO;
 import com.LIB.MessagingSystem.Model.Enums.RecipientTypes;
 import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Message;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
@@ -38,9 +40,10 @@ public class MessageServiceImpl implements MessageService {
     @Value("${file.storage-path}")
     private String storagePath;
 
-    public Message createMessage(String senderEmail, String receiverEmail, String content, List<MultipartFile> attachments) {
+    public Message createMessage(String receiverEmail, String content, List<MultipartFile> attachments) {
         // Find sender and receiver
-        Optional<Users> sender = userRepository.findByEmail(senderEmail);
+        LdapUserDTO user = (LdapUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<Users> sender = userRepository.findByEmail(user.getEmail());
         Optional<Users> receiver = userRepository.findByEmail(receiverEmail);
 
         if (sender.isEmpty() || receiver.isEmpty()) {

@@ -1,18 +1,20 @@
 package com.LIB.MessagingSystem.Controller;
 
 
+import com.LIB.MessagingSystem.Dto.SecurityDtos.LdapUserDTO;
 import com.LIB.MessagingSystem.Model.FilePrivilege;
 import com.LIB.MessagingSystem.Model.Message;
 import com.LIB.MessagingSystem.Repository.FilePrivilegeRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
-import com.LIB.MessagingSystem.Service.Impl.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -37,19 +39,21 @@ public class FileController {
     private final FilePrivilegeRepository filePrivilegeRepository;
 
     @GetMapping("/viewAttachment")
-    public ResponseEntity<Resource> viewAttachment(@RequestParam String fileName, @RequestParam String userId) throws IOException {
+    public ResponseEntity<?> viewAttachment(@RequestParam String fileName) throws IOException {
         // Retrieve the message by the attachment file name
         Message message = messageRepository.findByAttachmentsContaining(fileName);
         if (message == null) {
-            throw new RuntimeException("Message not found for the given attachment");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found for the given attachment");
         }
 
         // Validate user's access to the file
+        LdapUserDTO user = (LdapUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = user.getUid();
         FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndUserId(fileName, userId)
                 .orElseThrow(() -> new RuntimeException("Access Denied"));
 
         if (!privilege.isCanView() && !privilege.isCanDownload()) {
-            throw new RuntimeException("You don't have permission to view or download this file");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have permission to view or download this file");
         }
 
         Path path = Paths.get(storagePath).resolve(fileName);
@@ -61,19 +65,23 @@ public class FileController {
                 contentType = "application/octet-stream";
             }
 
-            // Determine if the file should be viewed inline or downloaded
-            String contentDisposition = privilege.isCanDownload()
-                    ? "attachment; filename=\"" + path.getFileName().toString() + "\""
-                    : "inline; filename=\"" + path.getFileName().toString() + "\"";
+            // Determine content disposition based on permissions
+            String contentDisposition;
+            if (privilege.isCanDownload()) {
+                contentDisposition = "attachment; filename=\"" + path.getFileName().toString() + "\"";
+            } else {
+                contentDisposition = "inline; filename=\"" + path.getFileName().toString() + "\"";
+            }
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                     .body(resource);
         } else {
-            throw new RuntimeException("File not found or not readable");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File not found or not readable");
         }
     }
+
 
     @PostMapping("/setFilePrivilege")
     public ResponseEntity<?> setFilePrivilege(@RequestParam String messageId, @RequestParam String attachmentId,
@@ -113,10 +121,10 @@ public class FileController {
     @PostMapping("/group/setFilePrivilege")
     public ResponseEntity<?> setGroupFilePrivilege(@RequestParam String groupId,
                                                    @RequestParam String attachmentId,
-                                                   @RequestParam String userId,
+                                                   //@RequestParam String userId,
                                                    @RequestParam boolean canView,
                                                    @RequestParam boolean canDownload) {
-        Optional<FilePrivilege> optionalPrivilege = filePrivilegeRepository.findByGroupIdAndAttachmentIdAndUserId(groupId, attachmentId, userId);
+        Optional<FilePrivilege> optionalPrivilege = filePrivilegeRepository.findByAttachmentIdAndGroupId(groupId, attachmentId);
 
         FilePrivilege privilege;
         if (optionalPrivilege.isPresent()) {
@@ -125,7 +133,7 @@ public class FileController {
             privilege = new FilePrivilege();
             privilege.setGroupId(groupId);
             privilege.setAttachmentId(attachmentId);
-            privilege.setUserId(userId);
+            //privilege.setUserId(userId);
         }
         privilege.setCanView(canView);
         privilege.setCanDownload(canDownload);
@@ -134,12 +142,12 @@ public class FileController {
         return ResponseEntity.ok("Group file privileges updated successfully");
     }
     @GetMapping("/group/viewAttachment")
-    public ResponseEntity<Resource> viewGroupAttachment(@RequestParam String fileName, @RequestParam String userId, @RequestParam String groupId) throws IOException {
+    public ResponseEntity<Resource> viewGroupAttachment(@RequestParam String fileName, @RequestParam String groupId) throws IOException {
         Message message = messageRepository.findByGroupIdAndAttachmentsContaining(groupId, fileName);
         if (message == null) {
             throw new RuntimeException("Message not found for the given attachment");
         }
-        FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndUserIdAndGroupId(fileName, userId, groupId)
+        FilePrivilege privilege = filePrivilegeRepository.findByAttachmentIdAndGroupId(fileName, groupId)
                 .orElseThrow(() -> new RuntimeException("Access Denied"));
 
         if (!privilege.isCanView() && !privilege.isCanDownload()) {

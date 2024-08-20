@@ -20,6 +20,7 @@ public class GroupMessageDto {
   private String groupId;
   private String groupName;
   private String senderUsername;
+  private String senderEmail;
   private String content;
   private List<MultipartFile> attachments;
 }
