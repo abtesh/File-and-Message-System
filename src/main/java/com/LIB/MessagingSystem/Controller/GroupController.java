@@ -4,7 +4,6 @@ import com.LIB.MessagingSystem.Dto.GroupMessageDto;
 import com.LIB.MessagingSystem.Model.Group;
 import com.LIB.MessagingSystem.Model.Message;
 import com.LIB.MessagingSystem.Service.GroupService;
-import com.LIB.MessagingSystem.Service.Impl.GroupServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,10 +59,10 @@ public class GroupController {
         Group group = groupServiceImpl.findGroupById(groupId);
         return ResponseEntity.ok(group);
     }
-//    @DeleteMapping
-//    public ResponseEntity<String> deleteGroupById(@RequestParam String groupId) {
-//        Group group = groupService.findGroupById(groupId);
-//        return ResponseEntity.ok("group Deleted Successfully");
-//    }
+    @DeleteMapping("/removeMember")
+    public ResponseEntity<String> deleteMemberFromGroup(@RequestParam String groupId, @RequestParam String memberId) {
+       groupServiceImpl.removeMemberFromGroup(groupId, memberId);
+        return ResponseEntity.ok("group Deleted Successfully");
+    }
 }
 

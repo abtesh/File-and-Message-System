@@ -15,6 +15,7 @@ import java.util.List;
 /**
  *
  *  @author Abenezer Teshome  - Date 17/aug/2024
+ *  Controller class to create Messages, get Messages and Fetch Messages between Users
  */
 
 
@@ -50,25 +51,22 @@ public class MessageController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
-
     @GetMapping("/{id}")
     public ResponseEntity<Message> getMessage(@PathVariable("id") String id) {
         Message message = messageServiceImpl.getMessage(id);
         return ResponseEntity.ok(message);
     }
-
     @GetMapping("/{senderId}/{receiverId}")
     public List<Message> getMessageBetweenUsers(@PathVariable("senderId") String senderId, @PathVariable("receiverId") String receiverId) {
         return messageServiceImpl.getMessagesBetweenUsers(senderId, receiverId);
     }
 
     @GetMapping("/inbox/{receiverId}")
-    public List<Message> getInboxMessages(@PathVariable("receiverId") String receiverId) {
-        return messageServiceImpl.getMessagesForUser(receiverId);
+    public List<Message> getInboxMessages() {
+        return messageServiceImpl.getMessagesForUser();
     }
 
-    @PostMapping("/search")
+    @GetMapping("/search")
     public ResponseEntity<Message> getMessageById(@RequestBody MessageSearchRequestDto searchRequest) {
         Message message = messageServiceImpl.findMessageByIdForUser(
                 searchRequest.getMessageId(),
