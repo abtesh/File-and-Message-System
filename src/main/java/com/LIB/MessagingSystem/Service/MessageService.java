@@ -16,11 +16,11 @@ public interface MessageService {
     Message sendMessage(String id);
     Message getMessage(String id);
     List<Message> getMessagesBetweenUsers(String senderId, String receiverId);
-    List<Message> getMessagesForUser(String receiverId);
+    List<Message> getMessagesForUser();
     Message findMessageByIdForUser(String messageId, String username);
-    String saveAttachment(MultipartFile file); // Consider if this should be in the interface
+    //String saveAttachment(MultipartFile file); // Consider if this should be in the interface
     Message getMessageWithAttachmentCheck(String messageId, String attachmentId, String userId);
     Message deleteMessageById(String id);
-    boolean isUserAuthorizedForFile(String username, String fileName);
+
 }
 

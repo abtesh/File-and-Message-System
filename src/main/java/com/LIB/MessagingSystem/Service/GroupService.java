@@ -22,4 +22,6 @@ public interface GroupService {
     Message sendMessage(String id);
 
     Group findGroupById(String groupId);
+
+    Group removeMemberFromGroup(String groupId, String memberId);
 }

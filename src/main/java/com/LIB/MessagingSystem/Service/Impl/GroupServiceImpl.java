@@ -11,6 +11,7 @@ import com.LIB.MessagingSystem.Repository.GroupRepository;
 import com.LIB.MessagingSystem.Repository.MessageRepository;
 import com.LIB.MessagingSystem.Repository.UserRepository;
 import com.LIB.MessagingSystem.Service.GroupService;
+import com.LIB.MessagingSystem.Utils.FileUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class GroupServiceImpl implements GroupService {
         List<String> attachmentPaths = new ArrayList<>();
         if (attachments != null && !attachments.isEmpty()) {
             for (MultipartFile attachment : attachments) {
-                String filePath = saveAttachment(attachment);
+                String filePath = FileUtils.saveAttachment(attachment, storagePath);
                 attachmentPaths.add(filePath);
             }
         }
@@ -130,34 +131,6 @@ public class GroupServiceImpl implements GroupService {
         saveFilePrivilegesForGroupMessage(message);
         return messageRepository.save(message);
     }
-
-    public String saveAttachment(MultipartFile file) {
-        String uploadDir = storagePath;  // Specify the correct path here
-        File directory = new File(uploadDir);
-
-        // Check if the directory exists, if not, create it
-        if (!directory.exists()) {
-            directory.mkdirs();  // Create the directory and any missing parent directories
-            logger.info("Directory created: " + directory.getAbsolutePath());
-        }
-
-        try {
-            // Generate a unique file name by concatenating a UUID with the original file name
-            String originalFilename = file.getOriginalFilename();
-            String uniqueFileName = UUID.randomUUID() + "_" + originalFilename;
-
-            // Save the file to the specified directory with the unique name
-            File dest = new File(directory, uniqueFileName);
-            file.transferTo(dest);
-            logger.info("File saved at: " + dest.getAbsolutePath());
-
-            return uniqueFileName;  // Return the unique file name
-
-        } catch (IOException e) {
-            logger.error("Failed to save file", e);
-            throw new RuntimeException("Failed to save file", e);
-        }
-    }
     private void saveFilePrivilegesForGroupMessage(Message message) {
         List<FilePrivilege> filePrivileges = new ArrayList<>();
         String messageId = message.getId();
@@ -180,5 +153,10 @@ public class GroupServiceImpl implements GroupService {
     public Group findGroupById(String groupId) {
         return groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found with id: " + groupId));
+    }
+    public Group removeMemberFromGroup(String groupId, String memberId) {
+        Group group = findGroupById(groupId);
+        group.getMembers().remove(memberId);
+        return groupRepository.save(group);
     }
 }
