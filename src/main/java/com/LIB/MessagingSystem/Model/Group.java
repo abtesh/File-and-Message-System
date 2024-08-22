@@ -1,10 +1,12 @@
 package com.LIB.MessagingSystem.Model;
 
 
+import com.LIB.MessagingSystem.Model.Enums.GroupType;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,14 +22,17 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Group {
     @Id
     private String id;
     private String name;
     private String makerId;
+    private String mail;
     //private String checkerId;
     private String description;
     private String title;
-    private Date creationDate;
-    private List<String> members = new ArrayList<>();
+    private LocalDate creationDate;
+    private List<String> members;
+    private GroupType groupType;
 }

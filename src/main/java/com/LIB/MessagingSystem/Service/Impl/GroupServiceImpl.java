@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -51,7 +52,7 @@ public class GroupServiceImpl implements GroupService {
             LdapUserDTO user = (LdapUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
            String sender = user.getUid();
             group.setMakerId(sender);
-            group.setCreationDate(new Date());
+            group.setCreationDate(LocalDate.now());
             if (!userRepository.existsById(memberId)) {
                 throw new RuntimeException("User with ID: " + memberId + " does not exist in the system");
             }

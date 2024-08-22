@@ -26,4 +26,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<GenericResponseDto<Void>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
         return new ResponseEntity<>(new GenericResponseDto<>(false,403,ex.getMessage(),null), HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<GenericResponseDto<Void>> handleIllegalStateException(IllegalStateException ex) {
+        return new ResponseEntity<>(new GenericResponseDto<>(false,429,ex.getMessage(),null), HttpStatus.TOO_MANY_REQUESTS);
+    }
 }
